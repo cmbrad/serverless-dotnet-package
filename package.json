@@ -1,0 +1,18 @@
+{
+  "name": "serverless-dotnet-package",
+  "version": "1.0.0",
+  "description": "Plugin to automatically package dotnet services when deploying with the Serverless framework",
+  "main": "index.js",
+  "author": "Christopher Bradley",
+  "license": "ISC",
+  "dependencies": {
+    "adm-zip": "^0.4.7",
+    "archiver": "^2.0.0",
+    "bluebird": "^3.5.0",
+    "child_process": "^1.0.2",
+    "fs": "0.0.1-security",
+    "glob-all": "^3.1.0",
+    "path": "^0.12.7",
+    "unzip": "^0.1.11"
+  }
+}
