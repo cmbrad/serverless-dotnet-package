@@ -2,7 +2,7 @@
 
 const Promise = require('bluebird');
 const program = require('child_process');
-var fs = require('fs');
+var fs = require('fs-extra');
 const path = require('path');
 const glob = require('glob-all');
 var archiver = require('archiver');
@@ -19,7 +19,11 @@ class ServerlessDotnetDeploy {
 
     this.hooks = {
       'before:package:createDeploymentArtifacts': () => Promise.bind(this).then(this.restoreDependencies),
-      'after:package:createDeploymentArtifacts': () => Promise.bind(this).then(this.createPackage).then(this.extractPackage).then(this.createPackageWithExtraFiles)
+      'after:package:createDeploymentArtifacts': () => Promise.bind(this)
+        .then(this.createPackage)
+        .then(this.extractPackage)
+        .then(this.createPackageWithExtraFiles)
+        .then(this.cleanup)
     };
   }
 
@@ -61,7 +65,7 @@ class ServerlessDotnetDeploy {
 
   extractPackage() {
     return new Promise(function(resolve, reject) {
-      this.serverless.cli.log('Extracting package...');
+      this.serverless.cli.log('Extracting package');
       fs.createReadStream(this.artifactPath).pipe(unzip.Extract({ path: path.join('.serverless', 'tmp')})).on('close', function() {
         resolve();
       });;
@@ -70,11 +74,8 @@ class ServerlessDotnetDeploy {
 
   createPackageWithExtraFiles() {
     return new Promise(function(resolve, reject) {
-      if (typeof this.serverless.service.custom.dotnetpackage.include === 'undefined') {
-        this.serverless.cli.log('No extra files to add to package');
-        resolve();
-      }
-      this.serverless.cli.log('Creating package with extra files');
+      this.serverless.cli.log('Recreating package with extra files');
+      const extraFiles = this.settings.include || [];
 
       var output = fs.createWriteStream(this.artifactPath);
       var archive = archiver('zip');
@@ -85,12 +86,24 @@ class ServerlessDotnetDeploy {
       archive.glob('**', {cwd: path.join('.serverless', 'tmp')});
 
       // Add extra files to package
-      this.serverless.service.custom.dotnetpackage.include.forEach((pattern) => {
+      extraFiles.forEach((pattern) => {
         archive.glob(pattern);
       });
 
       // Save the package
       archive.finalize();
+
+      output.on('close', function() {
+        resolve();
+      });
+    }.bind(this));
+  }
+
+  cleanup() {
+    return new Promise(function(resolve, reject) {
+      this.serverless.cli.log('Cleaning up')
+      fs.removeSync(path.join('.serverless', 'tmp'));
+      resolve();
     }.bind(this));
   }
 }
