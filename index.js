@@ -12,6 +12,7 @@ class ServerlessDotnetDeploy {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
+    this.settings = this.serverless.service.custom.dotnetpackage;
 
     let zipFileName = `${this.serverless.service.service}.zip`;
     this.artifactPath = path.join(this.serverless.config.servicePath, '.serverless', zipFileName);
@@ -40,9 +41,12 @@ class ServerlessDotnetDeploy {
 
   createPackage() {
     return new Promise(function(resolve, reject) {
-      this.serverless.cli.log(`Creating lambda package in ${this.artifactPath}`);
+      let configuration = this.settings.configuration || 'Release';
+      let framework = this.settings.framework || 'netcoreapp1.0';
 
-      program.exec(`dotnet lambda package ${this.artifactPath}`, function(error, stdout, stderr) {
+      this.serverless.cli.log(`Creating ${configuration} package using ${framework} in ${this.artifactPath}`);
+      
+      program.exec(`dotnet lambda package -c ${configuration} -f ${framework} -o ${this.artifactPath}`, function(error, stdout, stderr) {
         console.log(stdout);
 
         if (error) {
