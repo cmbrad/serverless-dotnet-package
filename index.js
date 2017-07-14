@@ -12,7 +12,8 @@ class ServerlessDotnetDeploy {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
-    this.settings = this.serverless.service.custom.dotnetpackage;
+
+    this.loadSettings();
 
     let zipFileName = `${this.serverless.service.service}.zip`;
     this.artifactPath = path.join(this.serverless.config.servicePath, '.serverless', zipFileName);
@@ -25,6 +26,14 @@ class ServerlessDotnetDeploy {
         .then(this.createPackageWithExtraFiles)
         .then(this.cleanup)
     };
+  }
+
+  loadSettings() {
+    if (this.serverless.service.custom != null) {
+      this.settings = this.serverless.service.custom.dotnetpackage || {};
+    } else {
+      this.settings = {};
+    }
   }
 
   restoreDependencies() {
@@ -82,7 +91,7 @@ class ServerlessDotnetDeploy {
       archive.pipe(output);
 
       // Add original files back to package
-      let globs = this.serverless.service.custom.dotnetpackage.include;
+      let globs = this.settings.include;
       archive.glob('**', {cwd: path.join('.serverless', 'tmp')});
 
       // Add extra files to package
