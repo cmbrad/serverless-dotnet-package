@@ -10,6 +10,11 @@ Tested against Serverless v1.17.0
 
 Inspired by https://github.com/fruffin/serverless-dotnet
 
+## Prerequisites
+To use this package you will need to have dotnet core installed for use of the `dotnet` command line binary.
+
+Available from: https://www.microsoft.com/net/core
+
 ## Installation
 
 To install, add serverless-dotnet-package to your `package.json`:
